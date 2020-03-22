@@ -96,7 +96,7 @@ class AutoTranslate(MycroftSkill):
         if line[0] in regex_chars:
             translated_part = translate(part, self.lang, 'en-us')
             if (part.endswith(' ')) and (len(part) > 1) :
-                    translated_part = translated_part + ' '
+                translated_part = translated_part + ' '
             elif part.endswith(' '):
                 translated_part = ' '
             result = result + translated_part
@@ -125,7 +125,7 @@ class AutoTranslate(MycroftSkill):
 
         self.unsupported_languages = []
   
-        lang = lang or self.lang
+        lang = self.lang
         if lang not in self.unsupported_languages:
             if lang in self.lang_map:
                 return True
