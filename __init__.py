@@ -123,19 +123,6 @@ class AutoTranslate(MycroftSkill):
         else:
             return self.translate_line(line[1:], part + line[0], result)
 
-        self.unsupported_languages = []
-  
-        lang = self.lang
-        if lang not in self.unsupported_languages:
-            if lang in self.lang_map:
-                return True
-            if lang[:2] in self.lang_map:
-                return True
-            for l in self.lang_map:
-                if self.lang_map[l].lower() == lang.lower():
-                    return True
-        return False
-
 
 def create_skill():
     return AutoTranslate()
