@@ -7,7 +7,7 @@ translated using google translate.
 
 This includes files in vocab, dialog, regex and locale folders within the skill folder. 
 
-Be aware that googeltranslation isnt perfect, and the translation needs manuel inspection. 
+Be aware that googel translation isnt perfect, and the translation needs manuel inspection. 
 
 This will translate all skills at initialization and after that check eveytime a kill is loaded if it needs translation.
 

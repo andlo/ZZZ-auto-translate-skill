@@ -35,15 +35,12 @@ class AutoTranslate(MycroftSkill):
 
     @intent_file_handler('auto.translate.intent')
     def handle_auto_translate(self, message):
-        self.speak_dialog("auto.translate.dialog")
+        self.speak_dialog('auto.translate')
         for skill in listdir(self.skillsdir):
             self.translate_skill(join(self.skillsdir, skill))
 
     def translate_skill(self, folder):
         ''' translate skill '''
-        if not self.validate_language(self.lang):
-            self.log.info('Langaage ' + self.lang + ' is not supportet')
-            return
         translate_folders = []
         lang_folders = []
         if isdir(join(folder, 'vocab')):
@@ -67,16 +64,7 @@ class AutoTranslate(MycroftSkill):
                         f.write('Please do a manuel inspection of the translation in every file ')
 
         for folder in translate_folders:
-            self.log.info('Translating: ' + folder) 
             for root, dirs, files in walk(folder, topdown=True):
-                for dir in dirs:
-                    dest = dir.replace('en-us', self.lang)
-                    if not isdir(dest):
-                        makedirs(dest, exist_ok=True)
-                        with open(join(dest, 'AUTO_TRANSLATED'), "w") as f:
-                            f.write('Files in this folder is auto translated by auto-translate skill. ')
-                            f.write('Please do a manuel inspection of the translation in every file ')
-
                 for file in files:
                     self.treanslate_file(root, file)
 
@@ -95,7 +83,9 @@ class AutoTranslate(MycroftSkill):
                         translated.append('# ' + line.strip('\n') + '\n')
                         translated.append(self.translate_line(line, '', '') + " \n")
             with open(join(dest, file), "w") as f:
+                f.writelines('# This file is auto translated by auto-translate skill. \n')
                 f.writelines(translated)
+            self.log.info('New translation ' + join(dest, file))
 
     def translate_line(self, line, part, result):
         ''' translate real words in line - not regex tags and other stuff '''
@@ -132,77 +122,6 @@ class AutoTranslate(MycroftSkill):
                 return self.translate_line(line[1:], '', result + line[0])    
         else:
             return self.translate_line(line[1:], part + line[0], result)
-
-    def translate(self, text, lang=None):
-        ''' translate text to lang '''
-        lang = lang or self.lang
-        if lang[:2] in self.lang_map and lang not in self.lang_map:
-            lang = lang[:2]
-        elif lang not in self.lang_map:
-            for l in self.lang_map:
-                if self.lang_map[l].lower() == lang.lower():
-                    lang = l
-                    break
-        translated = translate(text, lang)
-        return translated
-
-    def validate_language(self, lang=None):
-        ''' ensure language is supported by google translate '''
-        self.lang_map = {
-            'af': 'Afrikaans',
-            'sq': 'Albanian',
-            'ar': 'Arabic',
-            'hy': 'Armenian',
-            'bn': 'Bengali',
-            'ca': 'Catalan',
-            'zh': 'Chinese',
-            'zh-cn': 'Chinese (Mandarin/China)',
-            'zh-tw': 'Chinese (Mandarin/Taiwan)',
-            'zh-yue': 'Chinese (Cantonese)',
-            'hr': 'Croatian',
-            'cs': 'Czech',
-            'da': 'Danish',
-            'nl': 'Dutch',
-            'en': 'English',
-            'en-au': 'English (Australia)',
-            'en-uk': 'English (United Kingdom)',
-            'en-us': 'English (United States)',
-            'eo': 'Esperanto',
-            'fi': 'Finnish',
-            'fr': 'French',
-            'de': 'German',
-            'el': 'Greek',
-            'hi': 'Hindi',
-            'hu': 'Hungarian',
-            'is': 'Icelandic',
-            'id': 'Indonesian',
-            'it': 'Italian',
-            'ja': 'Japanese',
-            'km': 'Khmer (Cambodian)',
-            'ko': 'Korean',
-            'la': 'Latin',
-            'lv': 'Latvian',
-            'mk': 'Macedonian',
-            'no': 'Norwegian',
-            'pl': 'Polish',
-            'pt': 'Portuguese',
-            'ro': 'Romanian',
-            'ru': 'Russian',
-            'sr': 'Serbian',
-            'si': 'Sinhala',
-            'sk': 'Slovak',
-            'es': 'Spanish',
-            'es-es': 'Spanish (Spain)',
-            'es-us': 'Spanish (United States)',
-            'sw': 'Swahili',
-            'sv': 'Swedish',
-            'ta': 'Tamil',
-            'th': 'Thai',
-            'tr': 'Turkish',
-            'uk': 'Ukrainian',
-            'vi': 'Vietnamese',
-            'cy': 'Welsh'
-        }
 
         self.unsupported_languages = []
   
