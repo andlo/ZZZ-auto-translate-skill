@@ -16,8 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from mycroft import MycroftSkill, intent_file_handler
+from mycroft.messagebus.message import Message
 from os import makedirs, listdir, walk
-from os.path import join, isdir, isfile
+from os.path import join, isdir, isfile, expanduser
 from mtranslate import translate
 
 
@@ -26,9 +27,10 @@ class AutoTranslate(MycroftSkill):
         MycroftSkill.__init__(self)
 
     def initialize(self):
-        self.skillsdir = self.config_core.get('skills', {}).get('msm', {}).get('directory')
-        self.add_event('mycroft.skills.loaded',
-                       self.handler_mycroft_skills_loaded)
+        self.skillsdir = self.config_core.get('skills').get('msm').get('directory')
+        self.translatedir = expanduser(self.config_core.get('skills').get('translations_dir'))
+        #self.add_event('mycroft.skills.loaded',
+        #               self.handler_mycroft_skills_loaded)
 
     def handler_mycroft_skills_loaded(self, message):
         self.translate_skill(message.data.get('path'))
@@ -37,11 +39,14 @@ class AutoTranslate(MycroftSkill):
     def handle_auto_translate(self, message):
         self.speak_dialog('auto.translate')
         for skill in listdir(self.skillsdir):
-            self.translate_skill(join(self.skillsdir, skill))
+            if not skill[0] == '.':
+                self.translate_skill(join(self.skillsdir, skill))
 
     def translate_skill(self, folder):
         ''' translate skill '''
-        translate_folders = []
+        skillname = folder.rsplit('/')[-1]
+        dest = join(self.translatedir, skillname, self.lang)
+        
         lang_folders = []
         if isdir(join(folder, 'vocab')):
             lang_folders.append(join(folder, 'vocab/en-us'))
@@ -52,25 +57,22 @@ class AutoTranslate(MycroftSkill):
         if isdir(join(folder, 'locale')):
             lang_folders.append(join(folder, 'locale/en-us'))
 
+        for lang_folder in lang_folders:
+            if isdir(lang_folder.replace('en-us', self.lang)):
+                return
+        makedirs(dest, exist_ok=True)
+        with open(join(dest, 'AUTO_TRANSLATED'), "w") as f:
+            f.write('Files in this folder is auto translated by auto-translate skill. ')
+            f.write('Please do a manuel inspection of the translation in every file ')
+            
         for folder in lang_folders:
-            dest = folder.replace('en-us', self.lang)
-            translate_folders.append(folder)
-            if not isdir(dest):
-                translate_folders.append(folder)
-                if not isdir(dest):
-                    makedirs(dest, exist_ok=True)
-                    with open(join(dest, 'AUTO_TRANSLATED'), "w") as f:
-                        f.write('Files in this folder is auto translated by auto-translate skill. ')
-                        f.write('Please do a manuel inspection of the translation in every file ')
-
-        for folder in translate_folders:
-            for root, dirs, files in walk(folder, topdown=True):
+            for root, _, files in walk(folder, topdown=True):
                 for file in files:
-                    self.treanslate_file(root, file)
-
-    def treanslate_file(self, root, file):
+                    self.treanslate_file(root, dest, file)
+        
+        
+    def treanslate_file(self, root, dest, file):
         ''' translate file '''
-        dest = root.replace('en-us', self.lang)
         makedirs(dest, exist_ok=True)
         if not isfile(join(dest, file)):
             translated = []
